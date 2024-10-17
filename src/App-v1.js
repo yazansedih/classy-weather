@@ -33,21 +33,18 @@ function formatDay(dateStr) {
 }
 
 class App extends React.Component {
-  state = {
-    location: "",
-    isLoading: false,
-    displayLocation: "",
-    weather: {},
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      location: "",
+      isLoading: false,
+      displayLocation: "",
+      weather: {},
+    };
+    this.fetchWeather = this.fetchWeather.bind(this);
+  }
 
-  // constructor(props) {
-  //   super(props);
-  //   // this.fetchWeather = this.fetchWeather.bind(this);
-  // }
-  // async fetchWeather() {
-  fetchWeather = async () => {
-    if (this.state.location.length < 2) return this.setState({ weather: {} });
-
+  async fetchWeather() {
     try {
       this.setState({ isLoading: true });
 
@@ -62,7 +59,6 @@ class App extends React.Component {
 
       const { latitude, longitude, timezone, name, country_code } =
         geoData.results.at(0);
-
       this.setState({
         displayLocation: `${name} ${convertToFlag(country_code)}`,
       });
@@ -74,41 +70,31 @@ class App extends React.Component {
       const weatherData = await weatherRes.json();
       this.setState({ weather: weatherData.daily });
     } catch (err) {
-      console.error(err);
+      console.err(err);
     } finally {
+      // if there is error or not
       this.setState({ isLoading: false });
-    }
-  };
-
-  setLocation = (e) => this.setState({ location: e.target.value });
-
-  // useEffect []
-  componentDidMount() {
-    // this.fetchWeather();
-
-    this.setState({ location: localStorage.getItem("location") || "" });
-  }
-
-  // useEffect [location]
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.location !== prevState.location) {
-      this.fetchWeather();
-
-      localStorage.setItem("location", this.state.location);
     }
   }
 
   render() {
     return (
       <div className="app">
-        <h1>Classy Weather</h1>
-        <Input
-          location={this.state.location}
-          onChangeLocation={this.setLocation}
-        />
+        <h1 className="">Classy Weather</h1>
+        <div className="">
+          <input
+            type="text"
+            placeholder="Search from location..."
+            value={this.state.location}
+            onChange={(e) => this.setState({ location: e.target.value })}
+            className=""
+          ></input>
+        </div>
+        <button className="" onClick={this.fetchWeather}>
+          Get weather
+        </button>
 
         {this.state.isLoading && <p className="loader">Loading...</p>}
-
         {this.state.weather.weathercode && (
           <Weather
             weather={this.state.weather}
@@ -122,36 +108,7 @@ class App extends React.Component {
 
 export default App;
 
-class Input extends React.Component {
-  constructor(props) {
-    super(props);
-    this.inputRef = React.createRef();
-  }
-
-  componentDidMount() {
-    this.inputRef.current.focus();
-  }
-
-  render() {
-    return (
-      <div>
-        <input
-          type="text"
-          placeholder="Search from location..."
-          value={this.props.location}
-          onChange={this.props.onChangeLocation}
-          ref={this.inputRef}
-        />
-      </div>
-    );
-  }
-}
-
 class Weather extends React.Component {
-  componentWillUnmount() {
-    console.log("Weather will unmount");
-  }
-
   render() {
     const {
       temperature_2m_max: max,
@@ -169,7 +126,7 @@ class Weather extends React.Component {
               date={date}
               max={max.at(i)}
               min={min.at(i)}
-              code={codes.at(i)}
+              code={codes[i]}
               key={date}
               isToday={i === 0}
             />
@@ -182,10 +139,10 @@ class Weather extends React.Component {
 
 class Day extends React.Component {
   render() {
-    const { date, max, min, code, isToday } = this.props;
+    const { date, max, min, code, key, isToday } = this.props;
 
     return (
-      <li className="day">
+      <li className="day" key={key}>
         <span>{getWeatherIcon(code)}</span>
         <p>{isToday ? "Today" : formatDay(date)}</p>
         <p>
